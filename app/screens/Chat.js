@@ -7,7 +7,10 @@ export default function Chat() {
     const [messages, setMessages] = useState([]);
 
     useEffect((() => {
+        const chatList = database.ref('messages');
+
         const onReceive = data => {
+            console.log(data);
             const message = data.val();
             const form = {
                 _id: data.key,
@@ -23,12 +26,11 @@ export default function Chat() {
             setMessages(previousMessages => GiftedChat.append(previousMessages, form));
         }
 
-        database
-            .ref('messages')
+        chatList
             .orderByChild('createDate')
             .on("child_added", onReceive);
 
-        return database.ref('messages').off();
+        return chatList.off();
     }), []);
 
     const onSend = (messages) => {
