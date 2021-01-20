@@ -1,35 +1,59 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {GiftedChat} from "react-native-gifted-chat";
 
-import firebaseSDK from "../utils/FirebaseSDK";
+import {database, auth} from '../components/Firebase/firebase';
 
 export default function Chat() {
     const [messages, setMessages] = useState([]);
 
     useEffect((() => {
-        firebaseSDK.refOn(message =>
-            useCallback((messages = []) => {
-                setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
-            }, [])
-        );
+        const onReceive = data => {
+            const message = data.val();
+            const form = {
+                _id: data.key,
+                text: message.text,
+                //createdAt: new Date(message.createdAt),
+                createDate: message.createdAt,
+                user: {
+                    _id: message.user._id,
+                    name: message.user.name
+                }
+            };
 
-        return firebaseSDK.refOff();
+            setMessages(previousMessages => GiftedChat.append(previousMessages, form));
+        }
+
+        database
+            .ref('messages')
+            .orderByChild('createDate')
+            .on("child_added", onReceive);
+
+        return database.ref('messages').off();
     }), []);
 
-    const user = {
-        name: '유저명',
-        email: '유저이메일',
-        avatar: '',
-        id: firebaseSDK.uid,
-        _id: firebaseSDK.uid
-    }
+    const onSend = (messages) => {
+        const today = new Date();
+        const timestamp = today.toISOString();
 
+        messages.forEach(message => {
+            database
+                .ref('messages')
+                .push({
+                    text: message.text,
+                    user: message.user,
+                    createDate: timestamp
+                });
+        })
+    }
 
     return (
         <GiftedChat
             messages={messages}
-            onSend={firebaseSDK.send}
-            user={user}
+            onSend={messages => onSend(messages)}
+            user={{
+                _id: '',
+                name: 'user-1'
+            }}
         />
     )
 }
