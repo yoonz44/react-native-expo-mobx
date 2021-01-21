@@ -1,20 +1,21 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {GiftedChat} from "react-native-gifted-chat";
+import Constants from 'expo-constants';
 
-import {database, auth} from '../components/Firebase/firebase';
+import {database} from '../components/Firebase/firebase';
 
-export default function Chat() {
+export default function Chat({route}) {
     const [messages, setMessages] = useState([]);
+    const { roomId } = route.params;
 
     useEffect((() => {
-        const chatList = database.ref('messages');
+        const chatList = database.ref(`room/${roomId}`);
 
         const onReceive = data => {
             const message = data.val();
             const form = {
                 _id: data.key,
                 text: message.text,
-                //createdAt: new Date(message.createdAt),
                 createdAt: message.createdAt,
                 user: {
                     _id: message.user._id,
@@ -27,6 +28,7 @@ export default function Chat() {
 
         chatList
             .orderByChild('createdAt')
+            .limitToLast(20)
             .on("child_added", onReceive);
 
         return () => chatList.off();
@@ -38,11 +40,11 @@ export default function Chat() {
 
         messages.forEach(message => {
             database
-                .ref('messages')
+                .ref(`room/${roomId}`)
                 .push({
                     text: message.text,
                     user: message.user,
-                    createDate: timestamp
+                    createdAt: timestamp
                 });
         })
     }
@@ -52,11 +54,13 @@ export default function Chat() {
             messages={messages}
             onSend={messages => onSend(messages)}
             user={{
-                _id: 1,
-                name: 'user-1'
+                _id: Constants.deviceId,
+                name: `user-${Constants.deviceId}`
             }}
             infiniteScroll={true}
             loadEarlier={true}
+            isLoadingEarlier={false}
+            onLoadEarlier={() => console.log(100)}
         />
     )
 }
