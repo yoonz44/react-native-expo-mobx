@@ -1,17 +1,16 @@
 import React from 'react';
-import { Chat, ChatList} from "./screens";
-import {NavigationContainer} from "@react-navigation/native";
-import {createStackNavigator} from "@react-navigation/stack";
-
-const Stack = createStackNavigator();
+import {SafeAreaProvider} from "react-native-safe-area-context/src/SafeAreaContext";
+import Navigation from "./navigation";
+import {StatusBar} from "expo-status-bar";
+import useColorScheme from "./hooks/useColorScheme";
 
 export default function App() {
-  return (
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName='ChatList'>
-          <Stack.Screen name='Chat' component={Chat}/>
-          <Stack.Screen name='ChatList' component={ChatList}/>
-        </Stack.Navigator>
-      </NavigationContainer>
-  );
+    const colorScheme = useColorScheme();
+
+    return (
+        <SafeAreaProvider>
+            <Navigation colorScheme={colorScheme}/>
+            <StatusBar/>
+        </SafeAreaProvider>
+    );
 }

@@ -10,13 +10,12 @@ export default function Chat() {
         const chatList = database.ref('messages');
 
         const onReceive = data => {
-            console.log(data);
             const message = data.val();
             const form = {
                 _id: data.key,
                 text: message.text,
                 //createdAt: new Date(message.createdAt),
-                createDate: message.createdAt,
+                createdAt: message.createdAt,
                 user: {
                     _id: message.user._id,
                     name: message.user.name
@@ -27,10 +26,10 @@ export default function Chat() {
         }
 
         chatList
-            .orderByChild('createDate')
+            .orderByChild('createdAt')
             .on("child_added", onReceive);
 
-        return chatList.off();
+        return () => chatList.off();
     }), []);
 
     const onSend = (messages) => {
@@ -53,9 +52,11 @@ export default function Chat() {
             messages={messages}
             onSend={messages => onSend(messages)}
             user={{
-                _id: '',
+                _id: 1,
                 name: 'user-1'
             }}
+            infiniteScroll={true}
+            loadEarlier={true}
         />
     )
 }

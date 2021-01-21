@@ -1,25 +1,50 @@
 import React from 'react';
-import {StyleSheet, Text, View, Button} from "react-native";
-import { StatusBar } from 'expo-status-bar';
+import {Button, FlatList, ScrollView, Text, TouchableHighlight, View, StyleSheet} from "react-native";
 
-export default function ChatList({ navigation }) {
+const data = Array(30).fill(1).map((value, index) => {
+    return {
+        title: `룸-${index + 1}`,
+        key: index + 1
+    }
+});
+
+export default function ChatList({navigation}) {
     return (
-        <View style={styles.container}>
-            <Text>채팅 리스트으</Text>
-            <Button
-                title='채팅룸-1'
-                onPress={() => navigation.navigate('Chat')}
-            />
-            <StatusBar/>
-        </View>
+        <FlatList
+            ItemSeparatorComponent={Platform.OS !== 'android' && (highlighted => (
+                <View style={[styles.separator, highlighted && {marginLeft: 0}]}/>
+            ))}
+            data={data}
+            renderItem={({item, index, separators}) => (
+                <TouchableHighlight
+                    key={item.key}
+                    onPress={() => this._onPress(item)}
+                    onShowUnderlay={separators.highlight}
+                    onHideUnderlay={separators.unhighlight}>
+                    <View style={{backgroundColor: 'white'}}>
+                        <Text>{item.title}</Text>
+                        <Button
+                            title={item.title}
+                            onPress={() => navigation.navigate('Chat', {
+                                roomId: item.key
+                            })}
+                        />
+                    </View>
+                </TouchableHighlight>
+            )}
+        />
     )
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
         justifyContent: 'center',
+        marginHorizontal: 16,
+    },
+    separator: {
+        marginVertical: 8,
+        borderBottomColor: '#737373',
+        borderBottomWidth: StyleSheet.hairlineWidth,
     },
 });

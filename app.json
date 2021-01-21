@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./app/assets/images/logo.png",
     "splash": {
-      "image": "./app/assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
