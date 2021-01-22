@@ -3,6 +3,7 @@
     "name": "react-native-expo-mobx",
     "slug": "react-native-expo-mobx",
     "version": "1.0.0",
+    "scheme": "talkpic",
     "orientation": "portrait",
     "icon": "./app/assets/images/logo.png",
     "splash": {

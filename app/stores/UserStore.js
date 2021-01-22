@@ -4,7 +4,6 @@ class UserStore {
     @observable token;
 
     constructor() {
-        console.log(100);
     }
 
     @action setToken(token) {

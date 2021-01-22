@@ -5,16 +5,34 @@ import Constants from 'expo-constants';
 import {database} from '../components/Firebase/firebase';
 
 export default function Chat({route}) {
-    const [messages, setMessages] = useState([]);
     const { roomId } = route.params;
+    const chatList = database.ref(`room/${roomId}`);
+
+    const [messages, setMessages] = useState([]);
+    const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
+    const [loadEarlier, setLoadEarlier] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
+    const [keyArr, setKeyArr] = useState([]);
+    const [valueArr, setValueArr] = useState([]);
+
+    let chatListLength;
+    let pageSize = 20;
 
     useEffect((() => {
-        const chatList = database.ref(`room/${roomId}`);
+        setIsMounted(true);
 
-        const onReceive = data => {
-            const message = data.val();
+        const onReceive = (snapshot) => {
+            if (!snapshot.val()) {
+                return;
+            }
+
+            setKeyArr([...keyArr, snapshot.key]);
+            setValueArr([...valueArr, snapshot.val().createdAt]);
+
+            const message = snapshot.val();
+
             const form = {
-                _id: data.key,
+                _id: snapshot.key,
                 text: message.text,
                 createdAt: message.createdAt,
                 user: {
@@ -23,16 +41,75 @@ export default function Chat({route}) {
                 }
             };
 
+            if (chatListLength < pageSize + 1) {
+                setLoadEarlier(false);
+            }
+
+            chatListLength -= 1;
+
             setMessages(previousMessages => GiftedChat.append(previousMessages, form));
         }
 
         chatList
-            .orderByChild('createdAt')
-            .limitToLast(20)
-            .on("child_added", onReceive);
+            .once('value', snapshot => {
+                chatListLength = snapshot.numChildren();
 
-        return () => chatList.off();
+                if (chatListLength < pageSize + 1) {
+                    pageSize = chatListLength - 1;
+                }
+
+                chatList
+                    .orderByChild('createdAt')
+                    .limitToLast(pageSize)
+                    .on("child_added", onReceive);
+            })
+
+        return () => {
+            setIsMounted(false);
+            chatList.off();
+        }
     }), []);
+
+    const earlierMessages = () => {
+        chatList
+            .orderByChild('createdAt')
+            .endAt(valueArr[0], keyArr[0])
+            .limit(pageSize)
+            .once('value', snapshot => {
+                console.log(snapshot);
+
+                setValueArr([]);
+                setKeyArr([]);
+            })
+        // chatList
+        //     .orderByChild('createdAt')
+        //     .startAt(lastValue, lastKey)
+        //     .limitToLast(pageSize + 1)
+        //     .on("child_added", snapshot => {
+                // setLastKey(snapshot.key);
+                // setLastValue(snapshot.val().createdAt);
+                //
+                // const message = snapshot.val();
+                //
+                // const form = {
+                //     _id: snapshot.key,
+                //     text: message.text,
+                //     createdAt: message.createdAt,
+                //     user: {
+                //         _id: message.user._id,
+                //         name: message.user.name
+                //     }
+                // };
+                //
+                // if (chatListLength < pageSize + 1) {
+                //     setLoadEarlier(false);
+                // }
+                //
+                // chatListLength -= 1;
+                //
+                // setMessages(previousMessages => GiftedChat.prepend(previousMessages, form));
+            // });
+    };
 
     const onSend = (messages) => {
         const today = new Date();
@@ -49,6 +126,17 @@ export default function Chat({route}) {
         })
     }
 
+    const onLoadEarlier = () => {
+        setIsLoadingEarlier(true);
+
+        setTimeout(() => {
+            if (isMounted) {
+                earlierMessages();
+                setIsLoadingEarlier(false);
+            }
+        }, 1500) // simulating network
+    }
+
     return (
         <GiftedChat
             messages={messages}
@@ -57,10 +145,10 @@ export default function Chat({route}) {
                 _id: Constants.deviceId,
                 name: `user-${Constants.deviceId}`
             }}
-            infiniteScroll={true}
-            loadEarlier={true}
-            isLoadingEarlier={false}
-            onLoadEarlier={() => console.log(100)}
+            loadEarlier={loadEarlier}
+            isLoadingEarlier={isLoadingEarlier}
+            onLoadEarlier={onLoadEarlier}
+            infiniteScroll
         />
     )
 }
