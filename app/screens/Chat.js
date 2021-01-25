@@ -14,6 +14,7 @@ export default function Chat({route}) {
     const [isMounted, setIsMounted] = useState(false);
     const [keyArr, setKeyArr] = useState([]);
     const [valueArr, setValueArr] = useState([]);
+    const [tempArr, setTempArr] = useState([]);
 
     let chatListLength;
     let pageSize = 20;
@@ -26,7 +27,7 @@ export default function Chat({route}) {
                 return;
             }
 
-            setKeyArr(keyArr =>[...keyArr, snapshot.key]);
+            setKeyArr(keyArr => [...keyArr, snapshot.key]);
             setValueArr(valueArr => [...valueArr, snapshot.val().createdAt]);
 
             const message = snapshot.val();
@@ -59,7 +60,7 @@ export default function Chat({route}) {
                 }
 
                 chatList
-                    .orderByChild('createdAt')
+                    .orderByKey()
                     .limitToLast(pageSize)
                     .on("child_added", onReceive);
             })
@@ -72,11 +73,18 @@ export default function Chat({route}) {
 
     const earlierMessages = () => {
         chatList
-            .orderByChild('createdAt')
-            .endAt(valueArr[0], keyArr[0])
+            .orderByKey()
+            .endAt(keyArr[0])
             .limitToLast(pageSize + 1)
-            .once('value', snapshot => {
-                snapshot.forEach(data => {
+            .once('value', async snapshot  => {
+                console.log(200);
+                setValueArr([]);
+                setKeyArr([]);
+                setTempArr([]);
+                console.log(300);
+                console.log(valueArr.length, keyArr.length, tempArr.length);
+
+                await snapshot.forEach(data => {
                     const message = data.val();
 
                     const form = {
@@ -89,17 +97,26 @@ export default function Chat({route}) {
                         }
                     };
 
+                    // setTempArr([...tempArr, form]);
+                    // setKeyArr(keyArr => [...keyArr, snapshot.key]);
+                    // setValueArr(valueArr => [...valueArr, snapshot.val().createdAt]);
+
                     if (chatListLength < pageSize + 1) {
                         setLoadEarlier(false);
                     }
 
                     chatListLength -= 1;
-
-                    setMessages(previousMessages => GiftedChat.prepend(previousMessages, form));
                 });
 
-                setValueArr([]);
-                setKeyArr([]);
+                // setTempArr(tempArr.shift());
+                // setTempArr([...tempArr.reverse()]);
+
+                if (chatListLength < pageSize + 1) {
+                    pageSize = chatListLength - 1;
+                }
+
+                setMessages(previousMessages => GiftedChat.prepend(previousMessages, tempArr));
+                setIsLoadingEarlier(false);
             })
     };
 
@@ -123,7 +140,6 @@ export default function Chat({route}) {
 
         if (isMounted) {
             earlierMessages();
-            setIsLoadingEarlier(false);
         }
     }
 
