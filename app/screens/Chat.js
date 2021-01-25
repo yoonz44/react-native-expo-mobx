@@ -26,8 +26,8 @@ export default function Chat({route}) {
                 return;
             }
 
-            setKeyArr([...keyArr, snapshot.key]);
-            setValueArr([...valueArr, snapshot.val().createdAt]);
+            setKeyArr(keyArr =>[...keyArr, snapshot.key]);
+            setValueArr(valueArr => [...valueArr, snapshot.val().createdAt]);
 
             const message = snapshot.val();
 
@@ -74,41 +74,33 @@ export default function Chat({route}) {
         chatList
             .orderByChild('createdAt')
             .endAt(valueArr[0], keyArr[0])
-            .limit(pageSize)
+            .limitToLast(pageSize + 1)
             .once('value', snapshot => {
-                console.log(snapshot);
+                snapshot.forEach(data => {
+                    const message = data.val();
+
+                    const form = {
+                        _id: data.key,
+                        text: message.text,
+                        createdAt: message.createdAt,
+                        user: {
+                            _id: message.user._id,
+                            name: message.user.name
+                        }
+                    };
+
+                    if (chatListLength < pageSize + 1) {
+                        setLoadEarlier(false);
+                    }
+
+                    chatListLength -= 1;
+
+                    setMessages(previousMessages => GiftedChat.prepend(previousMessages, form));
+                });
 
                 setValueArr([]);
                 setKeyArr([]);
             })
-        // chatList
-        //     .orderByChild('createdAt')
-        //     .startAt(lastValue, lastKey)
-        //     .limitToLast(pageSize + 1)
-        //     .on("child_added", snapshot => {
-                // setLastKey(snapshot.key);
-                // setLastValue(snapshot.val().createdAt);
-                //
-                // const message = snapshot.val();
-                //
-                // const form = {
-                //     _id: snapshot.key,
-                //     text: message.text,
-                //     createdAt: message.createdAt,
-                //     user: {
-                //         _id: message.user._id,
-                //         name: message.user.name
-                //     }
-                // };
-                //
-                // if (chatListLength < pageSize + 1) {
-                //     setLoadEarlier(false);
-                // }
-                //
-                // chatListLength -= 1;
-                //
-                // setMessages(previousMessages => GiftedChat.prepend(previousMessages, form));
-            // });
     };
 
     const onSend = (messages) => {
@@ -129,12 +121,10 @@ export default function Chat({route}) {
     const onLoadEarlier = () => {
         setIsLoadingEarlier(true);
 
-        setTimeout(() => {
-            if (isMounted) {
-                earlierMessages();
-                setIsLoadingEarlier(false);
-            }
-        }, 1500) // simulating network
+        if (isMounted) {
+            earlierMessages();
+            setIsLoadingEarlier(false);
+        }
     }
 
     return (
