@@ -1,19 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {GiftedChat} from "react-native-gifted-chat";
+import {GiftedChat, Bubble} from "react-native-gifted-chat";
 import Constants from 'expo-constants';
 
 import {database} from '../components/Firebase/firebase';
+import Loading from "../components/Loading";
 
 export default function Chat({route}) {
-    const { roomId } = route.params;
+    const {roomId} = route.params;
     const chatList = database.ref(`room/${roomId}`);
 
+    const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
     const [loadEarlier, setLoadEarlier] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
     const [keyArr, setKeyArr] = useState([]);
-    const [valueArr, setValueArr] = useState([]);
     const [tempArr, setTempArr] = useState([]);
 
     let chatListLength;
@@ -22,37 +23,9 @@ export default function Chat({route}) {
     useEffect((() => {
         setIsMounted(true);
 
-        const onReceive = (snapshot) => {
-            if (!snapshot.val()) {
-                return;
-            }
-
-            setKeyArr(keyArr => [...keyArr, snapshot.key]);
-            setValueArr(valueArr => [...valueArr, snapshot.val().createdAt]);
-
-            const message = snapshot.val();
-
-            const form = {
-                _id: snapshot.key,
-                text: message.text,
-                createdAt: message.createdAt,
-                user: {
-                    _id: message.user._id,
-                    name: message.user.name
-                }
-            };
-
-            if (chatListLength < pageSize + 1) {
-                setLoadEarlier(false);
-            }
-
-            chatListLength -= 1;
-
-            setMessages(previousMessages => GiftedChat.append(previousMessages, form));
-        }
-
         chatList
-            .once('value', snapshot => {
+            .once('value')
+            .then(snapshot => {
                 chatListLength = snapshot.numChildren();
 
                 if (chatListLength < pageSize + 1) {
@@ -63,7 +36,9 @@ export default function Chat({route}) {
                     .orderByKey()
                     .limitToLast(pageSize)
                     .on("child_added", onReceive);
-            })
+
+                setLoading(false);
+            });
 
         return () => {
             setIsMounted(false);
@@ -71,20 +46,51 @@ export default function Chat({route}) {
         }
     }), []);
 
-    const earlierMessages = () => {
-        chatList
-            .orderByKey()
-            .endAt(keyArr[0])
-            .limitToLast(pageSize + 1)
-            .once('value', async snapshot  => {
-                console.log(200);
-                setValueArr([]);
-                setKeyArr([]);
-                setTempArr([]);
-                console.log(300);
-                console.log(valueArr.length, keyArr.length, tempArr.length);
+    const onReceive = (snapshot) => {
+        if (!snapshot.val()) {
+            return;
+        }
 
-                await snapshot.forEach(data => {
+        setKeyArr((prevArr) => [...prevArr, snapshot.key]);
+
+        const message = snapshot.val();
+
+        const form = {
+            _id: snapshot.key,
+            text: message.text,
+            createdAt: message.createdAt,
+            user: {
+                _id: message.user._id,
+                name: message.user.name
+            }
+        };
+
+        if (chatListLength < pageSize + 1) {
+            setLoadEarlier(false);
+        }
+
+        chatListLength -= 1;
+
+        setMessages(previousMessages => GiftedChat.append(previousMessages, form));
+    }
+
+    const earlierMessages = async () => {
+        const lastKey = keyArr[0];
+        console.log(lastKey)
+        await setKeyArr([]);
+        await setTempArr([]);
+        console.log(keyArr);
+        await chatList
+            .orderByKey()
+            .endAt(lastKey)
+            .limitToLast(pageSize + 1)
+            .once('value', snapshot => {
+                console.log(200);
+
+                console.log(300);
+                console.log(keyArr.length, tempArr.length);
+
+                snapshot.forEach(data => {
                     const message = data.val();
 
                     const form = {
@@ -97,9 +103,8 @@ export default function Chat({route}) {
                         }
                     };
 
-                    // setTempArr([...tempArr, form]);
-                    // setKeyArr(keyArr => [...keyArr, snapshot.key]);
-                    // setValueArr(valueArr => [...valueArr, snapshot.val().createdAt]);
+                    setTempArr((prevArr) => [...prevArr, form]);
+                    setKeyArr((prevArr) => [...prevArr, snapshot.key]);
 
                     if (chatListLength < pageSize + 1) {
                         setLoadEarlier(false);
@@ -108,8 +113,8 @@ export default function Chat({route}) {
                     chatListLength -= 1;
                 });
 
-                // setTempArr(tempArr.shift());
-                // setTempArr([...tempArr.reverse()]);
+                setTempArr(tempArr.shift());
+                setTempArr([...tempArr.reverse()]);
 
                 if (chatListLength < pageSize + 1) {
                     pageSize = chatListLength - 1;
@@ -135,12 +140,29 @@ export default function Chat({route}) {
         })
     }
 
-    const onLoadEarlier = () => {
+    const onLoadEarlier = async () => {
         setIsLoadingEarlier(true);
 
         if (isMounted) {
-            earlierMessages();
+            await earlierMessages();
         }
+    }
+
+    const renderBubble = (props) => {
+        return (
+            <Bubble
+                {...props}
+                wrapperStyle={{
+                    left: {
+                        backgroundColor: '#d3d3d3',
+                    },
+                }}
+            />
+        );
+    }
+
+    if (loading) {
+        return <Loading />;
     }
 
     return (
@@ -151,6 +173,7 @@ export default function Chat({route}) {
                 _id: Constants.deviceId,
                 name: `user-${Constants.deviceId}`
             }}
+            renderBubble={renderBubble}
             loadEarlier={loadEarlier}
             isLoadingEarlier={isLoadingEarlier}
             onLoadEarlier={onLoadEarlier}
