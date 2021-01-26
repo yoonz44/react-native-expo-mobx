@@ -5,6 +5,11 @@ import Constants from 'expo-constants';
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
 
+let keyArr = [];
+let chatArr = [];
+let chatListLength = 0;
+let pageSize = 20;
+
 export default function Chat({route}) {
     const {roomId} = route.params;
     const chatList = database.ref(`room/${roomId}`);
@@ -14,11 +19,6 @@ export default function Chat({route}) {
     const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
     const [loadEarlier, setLoadEarlier] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
-    const [keyArr, setKeyArr] = useState([]);
-    const [tempArr, setTempArr] = useState([{id: 1}, {id: 2}]);
-
-    let chatListLength;
-    let pageSize = 20;
 
     useEffect(() => {
         setIsMounted(true);
@@ -28,33 +28,37 @@ export default function Chat({route}) {
             .then(snapshot => {
                 chatListLength = snapshot.numChildren();
 
-                if (chatListLength < pageSize + 1) {
-                    pageSize = chatListLength - 1;
+                if (chatListLength !== 0) {
+                    if (chatListLength <= pageSize) {
+                        pageSize = chatListLength;
+                    } else {
+                        setLoadEarlier(true);
+                        chatListLength -= pageSize;
+                    }
+
+                    chatList
+                        .orderByKey()
+                        .limitToLast(pageSize)
+                        .on("child_added", onReceive);
                 } else {
-                    setLoadEarlier(true);
+                    chatList
+                        .orderByKey()
+                        .on("child_added", onReceive);
                 }
-
-                chatList
-                    .orderByKey()
-                    .limitToLast(pageSize)
-                    .on("child_added", onReceive);
             });
-
-        setTempArr([{id: 3}, ...tempArr]);
-        console.log(tempArr);
 
         return () => {
             setIsMounted(false);
             chatList.off();
         }
-    }, [tempArr, keyArr]);
+    }, []);
 
     const onReceive = (snapshot) => {
         if (!snapshot.val()) {
             return;
         }
 
-        setKeyArr((prevArr) => [...prevArr, snapshot.key]);
+        keyArr.push(snapshot.key);
 
         const message = snapshot.val();
 
@@ -68,12 +72,6 @@ export default function Chat({route}) {
             }
         };
 
-        if (chatListLength < pageSize + 1) {
-            setLoadEarlier(false);
-        }
-
-        chatListLength -= 1;
-
         setMessages(previousMessages => GiftedChat.append(previousMessages, form));
 
         setLoading(false);
@@ -82,8 +80,9 @@ export default function Chat({route}) {
     const earlierMessages = () => {
         const lastKey = keyArr[0];
 
-        setKeyArr([]);
-        setTempArr([]);
+        keyArr = [];
+        chatArr = [];
+
         chatList
             .orderByKey()
             .endAt(lastKey)
@@ -103,24 +102,27 @@ export default function Chat({route}) {
                         }
                     };
 
-                    // setTempArr((prevArr) => [...prevArr, form]);
-                    setKeyArr((prevArr) => [...prevArr, snapshot.key]);
+                    if (data.key !== lastKey) {
+                        chatArr.push(form);
+                        keyArr.push(snapshot.key);
 
-                    if (chatListLength < pageSize + 1) {
-                        setLoadEarlier(false);
+                        chatListLength -= 1;
                     }
-
-                    chatListLength -= 1;
                 });
 
-                // setTempArr(tempArr.shift());
-                // setTempArr([...tempArr.reverse()]);
-
-                if (chatListLength < pageSize + 1) {
-                    pageSize = chatListLength - 1;
+                if (chatListLength === 0) {
+                    setLoadEarlier(false);
                 }
 
-                setMessages(previousMessages => GiftedChat.prepend(previousMessages, tempArr));
+                if (chatListLength <= pageSize) {
+                    pageSize = chatListLength;
+                } else {
+                    chatListLength -= pageSize;
+                }
+
+                chatArr.reverse();
+
+                setMessages(previousMessages => GiftedChat.prepend(previousMessages, chatArr));
 
                 setIsLoadingEarlier(false);
             })
@@ -141,11 +143,11 @@ export default function Chat({route}) {
         })
     }
 
-    const onLoadEarlier = async () => {
+    const onLoadEarlier = () => {
         setIsLoadingEarlier(true);
 
         if (isMounted) {
-            await earlierMessages();
+            earlierMessages();
         }
     }
 
@@ -163,7 +165,7 @@ export default function Chat({route}) {
     }
 
     if (loading) {
-        return <Loading />;
+        return <Loading/>;
     }
 
     return (
