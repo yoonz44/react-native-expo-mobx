@@ -12,15 +12,15 @@ export default function Chat({route}) {
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
     const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
-    const [loadEarlier, setLoadEarlier] = useState(true);
+    const [loadEarlier, setLoadEarlier] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [keyArr, setKeyArr] = useState([]);
-    const [tempArr, setTempArr] = useState([]);
+    const [tempArr, setTempArr] = useState([{id: 1}, {id: 2}]);
 
     let chatListLength;
     let pageSize = 20;
 
-    useEffect((() => {
+    useEffect(() => {
         setIsMounted(true);
 
         chatList
@@ -30,21 +30,24 @@ export default function Chat({route}) {
 
                 if (chatListLength < pageSize + 1) {
                     pageSize = chatListLength - 1;
+                } else {
+                    setLoadEarlier(true);
                 }
 
                 chatList
                     .orderByKey()
                     .limitToLast(pageSize)
                     .on("child_added", onReceive);
-
-                setLoading(false);
             });
+
+        setTempArr([{id: 3}, ...tempArr]);
+        console.log(tempArr);
 
         return () => {
             setIsMounted(false);
             chatList.off();
         }
-    }), []);
+    }, [tempArr, keyArr]);
 
     const onReceive = (snapshot) => {
         if (!snapshot.val()) {
@@ -72,24 +75,21 @@ export default function Chat({route}) {
         chatListLength -= 1;
 
         setMessages(previousMessages => GiftedChat.append(previousMessages, form));
+
+        setLoading(false);
     }
 
-    const earlierMessages = async () => {
+    const earlierMessages = () => {
         const lastKey = keyArr[0];
-        console.log(lastKey)
-        await setKeyArr([]);
-        await setTempArr([]);
-        console.log(keyArr);
-        await chatList
+
+        setKeyArr([]);
+        setTempArr([]);
+        chatList
             .orderByKey()
             .endAt(lastKey)
             .limitToLast(pageSize + 1)
-            .once('value', snapshot => {
-                console.log(200);
-
-                console.log(300);
-                console.log(keyArr.length, tempArr.length);
-
+            .once('value')
+            .then(snapshot => {
                 snapshot.forEach(data => {
                     const message = data.val();
 
@@ -103,7 +103,7 @@ export default function Chat({route}) {
                         }
                     };
 
-                    setTempArr((prevArr) => [...prevArr, form]);
+                    // setTempArr((prevArr) => [...prevArr, form]);
                     setKeyArr((prevArr) => [...prevArr, snapshot.key]);
 
                     if (chatListLength < pageSize + 1) {
@@ -113,14 +113,15 @@ export default function Chat({route}) {
                     chatListLength -= 1;
                 });
 
-                setTempArr(tempArr.shift());
-                setTempArr([...tempArr.reverse()]);
+                // setTempArr(tempArr.shift());
+                // setTempArr([...tempArr.reverse()]);
 
                 if (chatListLength < pageSize + 1) {
                     pageSize = chatListLength - 1;
                 }
 
                 setMessages(previousMessages => GiftedChat.prepend(previousMessages, tempArr));
+
                 setIsLoadingEarlier(false);
             })
     };
