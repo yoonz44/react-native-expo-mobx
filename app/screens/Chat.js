@@ -1,16 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {GiftedChat, Bubble} from "react-native-gifted-chat";
+import {GiftedChat, Bubble, GiftedAvatar} from "react-native-gifted-chat";
 import Constants from 'expo-constants';
+
+import { createDrawerNavigator } from "@react-navigation/drawer";
 
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
+import CustomSidebarMenu from "../components/CustomSideBarMenu";
+import NavigationDrawerStructure from "../components/NavigationDrawerStructure";
 
 let keyArr = [];
 let chatArr = [];
 let chatListLength = 0;
 let pageSize = 20;
 
-export default function Chat({route}) {
+export default function Chat({route, navigation}) {
     const {roomId} = route.params;
     const chatList = database.ref(`room/${roomId}`);
 
@@ -169,23 +173,54 @@ export default function Chat({route}) {
         );
     }
 
+    const renderAvatar = (props) => {
+        return (
+            <GiftedAvatar
+                {...props}
+            />
+        );
+    }
+
+    const ChatDetail = ({navigation}) => {
+        return (
+            <GiftedChat
+                messages={messages}
+                onSend={messages => onSend(messages)}
+                user={{
+                    _id: Constants.deviceId,
+                    name: `user-${Constants.deviceId}`
+                }}
+                renderBubble={renderBubble}
+                renderAvatar={renderAvatar}
+                loadEarlier={loadEarlier}
+                isLoadingEarlier={isLoadingEarlier}
+                onLoadEarlier={onLoadEarlier}
+                infiniteScroll
+            />
+        )
+    }
+
+    const Drawer = createDrawerNavigator();
+
     if (loading) {
         return <Loading/>;
     }
 
     return (
-        <GiftedChat
-            messages={messages}
-            onSend={messages => onSend(messages)}
-            user={{
-                _id: Constants.deviceId,
-                name: `user-${Constants.deviceId}`
-            }}
-            renderBubble={renderBubble}
-            loadEarlier={loadEarlier}
-            isLoadingEarlier={isLoadingEarlier}
-            onLoadEarlier={onLoadEarlier}
-            infiniteScroll
-        />
+        <Drawer.Navigator
+            drawerContent={(props) => <CustomSidebarMenu {...props}/>}
+            drawerPosition="right"
+            openByDefault={false}
+        >
+            <Drawer.Screen
+                name="ChatDetail"
+                component={ChatDetail}
+                options={{
+                    headerRight: () => (
+                        <NavigationDrawerStructure navigationProps={navigation}/>
+                    )
+                }}
+            />
+        </Drawer.Navigator>
     )
 }

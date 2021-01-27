@@ -5,6 +5,7 @@ import * as React from 'react';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import LinkingConfiguration from './LinkingConfiguration';
 import {Chat, ChatList} from "../screens";
+import NavigationDrawerStructure from "../components/NavigationDrawerStructure";
 
 // If you are not familiar with React Navigation, we recommend going through the
 // "Fundamentals" guide: https://reactnavigation.org/docs/getting-started
@@ -22,10 +23,13 @@ export default function Navigation({ colorScheme }) {
 // Read more here: https://reactnavigation.org/docs/modal
 const Stack = createStackNavigator();
 
-function RootNavigator() {
+function RootNavigator({navigation}) {
     return (
-        <Stack.Navigator initialRouteName='ChatList' screenOptions={{ headerShown: false }}>
-            <Stack.Screen name='Chat' component={Chat}/>
+        <Stack.Navigator initialRouteName='ChatList' screenOptions={{ headerShown: true }}>
+            <Stack.Screen
+                name='Chat'
+                component={Chat}
+            />
             <Stack.Screen name='ChatList' component={ChatList}/>
             <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         </Stack.Navigator>
