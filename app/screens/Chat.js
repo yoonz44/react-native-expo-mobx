@@ -23,6 +23,11 @@ export default function Chat({route}) {
     useEffect(() => {
         setIsMounted(true);
 
+        keyArr = [];
+        chatArr = [];
+        chatListLength = 0;
+        pageSize = 20;
+
         chatList
             .once('value')
             .then(snapshot => {
@@ -44,6 +49,8 @@ export default function Chat({route}) {
                     chatList
                         .orderByKey()
                         .on("child_added", onReceive);
+
+                    setLoading(false);
                 }
             });
 
@@ -104,7 +111,7 @@ export default function Chat({route}) {
 
                     if (data.key !== lastKey) {
                         chatArr.push(form);
-                        keyArr.push(snapshot.key);
+                        keyArr.push(data.key);
 
                         chatListLength -= 1;
                     }
@@ -116,8 +123,6 @@ export default function Chat({route}) {
 
                 if (chatListLength <= pageSize) {
                     pageSize = chatListLength;
-                } else {
-                    chatListLength -= pageSize;
                 }
 
                 chatArr.reverse();
