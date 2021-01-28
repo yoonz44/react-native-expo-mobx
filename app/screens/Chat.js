@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Bubble, GiftedChat} from "react-native-gifted-chat";
 import Constants from 'expo-constants';
-import {StyleSheet, View, Text} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
@@ -173,6 +173,35 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
             />
         );
     }
+
+    const renderAvatar = (props) => {
+        return (
+            <GiftedAvatar
+                {...props}
+            />
+        );
+    }
+
+    const ChatDetail = ({navigation}) => {
+        return (
+            <GiftedChat
+                messages={messages}
+                onSend={messages => onSend(messages)}
+                user={{
+                    _id: Constants.deviceId,
+                    name: `user-${Constants.deviceId}`
+                }}
+                renderBubble={renderBubble}
+                renderAvatar={renderAvatar}
+                loadEarlier={loadEarlier}
+                isLoadingEarlier={isLoadingEarlier}
+                onLoadEarlier={onLoadEarlier}
+                infiniteScroll
+            />
+        )
+    }
+
+    const Drawer = createDrawerNavigator();
 
     if (loading) {
         return <Loading/>;
