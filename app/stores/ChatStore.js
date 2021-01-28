@@ -1,9 +1,13 @@
-import {action, observable} from 'mobx';
+import {action, makeAutoObservable, observable} from 'mobx';
 
 class ChatStore {
-    @observable isSideOpen = false;
+    isSideOpen = false;
 
-    @action setSideOpen(flag) {
+    constructor() {
+        makeAutoObservable(this);
+    }
+
+    setSideOpen(flag) {
         this.isSideOpen = flag;
     }
 }

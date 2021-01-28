@@ -61,6 +61,7 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
         return () => {
             setIsMounted(false);
             chatList.off();
+            ChatStore.setSideOpen(false);
         }
     }, []);
 
@@ -179,7 +180,7 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
 
     return (
         <SideMenu
-            menu={<Menu/>}
+            menu={<Menu flag={ChatStore.isSideOpen}/>}
             menuPosition="right"
             isOpen={ChatStore.isSideOpen}
             onChange={isOpen => ChatStore.setSideOpen(isOpen)}
@@ -217,11 +218,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5FCFF',
-    },
-    welcome: {
-        fontSize: 20,
-        textAlign: 'center',
-        margin: 10,
     },
     instructions: {
         textAlign: 'center',

@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export default function Menu() {
+export default function Menu(props) {
     return (
         <ScrollView scrollsToTop={false} style={styles.menu}>
             <View style={styles.avatarContainer}>
@@ -52,11 +52,15 @@ export default function Menu() {
                 <Text style={styles.name}>Your name</Text>
             </View>
 
-            <Text
-                style={styles.item}
-            >
-                About
-            </Text>
+            {
+                props.flag && (
+                    <Text
+                        style={styles.item}
+                    >
+                        About
+                    </Text>
+                )
+            }
 
             <Text
                 style={styles.item}
