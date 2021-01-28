@@ -4,10 +4,11 @@ import Navigation from "./navigation";
 import {StatusBar} from "expo-status-bar";
 import useColorScheme from "./hooks/useColorScheme";
 import {Provider} from "mobx-react";
-import UserStore from "./stores/UserStore";
+import { UserStore, ChatStore } from "./stores";
 
 const stores = {
     UserStore,
+    ChatStore
 };
 
 export default function App() {

@@ -1,16 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {GiftedChat, Bubble} from "react-native-gifted-chat";
+import {Bubble, GiftedChat} from "react-native-gifted-chat";
 import Constants from 'expo-constants';
+import {StyleSheet, View, Text} from 'react-native';
 
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
+import SideMenu from "react-native-side-menu-updated";
+import Menu from "../components/Menu";
+import {inject, observer} from "mobx-react";
 
 let keyArr = [];
 let chatArr = [];
 let chatListLength = 0;
 let pageSize = 20;
 
-export default function Chat({route}) {
+const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
     const {roomId} = route.params;
     const chatList = database.ref(`room/${roomId}`);
 
@@ -174,18 +178,56 @@ export default function Chat({route}) {
     }
 
     return (
-        <GiftedChat
-            messages={messages}
-            onSend={messages => onSend(messages)}
-            user={{
-                _id: Constants.deviceId,
-                name: `user-${Constants.deviceId}`
-            }}
-            renderBubble={renderBubble}
-            loadEarlier={loadEarlier}
-            isLoadingEarlier={isLoadingEarlier}
-            onLoadEarlier={onLoadEarlier}
-            infiniteScroll
-        />
+        <SideMenu
+            menu={<Menu/>}
+            menuPosition="right"
+            isOpen={ChatStore.isSideOpen}
+            onChange={isOpen => ChatStore.setSideOpen(isOpen)}
+        >
+            <View style={styles.container}>
+                <GiftedChat
+                    messages={messages}
+                    onSend={messages => onSend(messages)}
+                    user={{
+                        _id: Constants.deviceId,
+                        name: `user-${Constants.deviceId}`
+                    }}
+                    renderBubble={renderBubble}
+                    loadEarlier={loadEarlier}
+                    isLoadingEarlier={isLoadingEarlier}
+                    onLoadEarlier={onLoadEarlier}
+                    infiniteScroll
+                />
+            </View>
+        </SideMenu>
     )
-}
+}));
+
+const styles = StyleSheet.create({
+    button: {
+        position: 'absolute',
+        top: 20,
+        padding: 10,
+    },
+    caption: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        alignItems: 'center',
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#F5FCFF',
+    },
+    welcome: {
+        fontSize: 20,
+        textAlign: 'center',
+        margin: 10,
+    },
+    instructions: {
+        textAlign: 'center',
+        color: '#333333',
+        marginBottom: 5,
+    },
+});
+
+export default Chat;

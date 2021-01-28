@@ -1,13 +1,8 @@
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import {DarkTheme, DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import * as React from 'react';
-
-import NotFoundScreen from '../screens/NotFoundScreen';
 import LinkingConfiguration from './LinkingConfiguration';
-import {Chat, ChatList} from "../screens";
+import RootNavigator from "./RootNavigator";
 
-// If you are not familiar with React Navigation, we recommend going through the
-// "Fundamentals" guide: https://reactnavigation.org/docs/getting-started
 export default function Navigation({ colorScheme }) {
     return (
         <NavigationContainer
@@ -15,19 +10,5 @@ export default function Navigation({ colorScheme }) {
             theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <RootNavigator />
         </NavigationContainer>
-    );
-}
-
-// A root stack navigator is often used for displaying modals on top of all other content
-// Read more here: https://reactnavigation.org/docs/modal
-const Stack = createStackNavigator();
-
-function RootNavigator() {
-    return (
-        <Stack.Navigator initialRouteName='ChatList' screenOptions={{ headerShown: false }}>
-            <Stack.Screen name='Chat' component={Chat}/>
-            <Stack.Screen name='ChatList' component={ChatList}/>
-            <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-        </Stack.Navigator>
     );
 }
