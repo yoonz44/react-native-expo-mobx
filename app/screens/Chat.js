@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {Bubble, GiftedChat} from "react-native-gifted-chat";
-import Constants from 'expo-constants';
 import {StyleSheet, View} from 'react-native';
+import {inject, observer} from "mobx-react";
+import {Bubble, GiftedChat} from "react-native-gifted-chat";
+
+import Constants from 'expo-constants';
+import SideMenu from "react-native-side-menu-updated";
+import Toast from 'react-native-simple-toast';
 
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
-import SideMenu from "react-native-side-menu-updated";
 import Menu from "../components/Menu";
-import {inject, observer} from "mobx-react";
 
 let keyArr = [];
 let chatArr = [];
@@ -139,6 +141,7 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
     };
 
     const onSend = (messages) => {
+        Toast.showWithGravity('Hello World', Toast.LONG, Toast.TOP);
         const today = new Date();
         const timestamp = today.toISOString();
 
@@ -174,35 +177,6 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
         );
     }
 
-    const renderAvatar = (props) => {
-        return (
-            <GiftedAvatar
-                {...props}
-            />
-        );
-    }
-
-    const ChatDetail = ({navigation}) => {
-        return (
-            <GiftedChat
-                messages={messages}
-                onSend={messages => onSend(messages)}
-                user={{
-                    _id: Constants.deviceId,
-                    name: `user-${Constants.deviceId}`
-                }}
-                renderBubble={renderBubble}
-                renderAvatar={renderAvatar}
-                loadEarlier={loadEarlier}
-                isLoadingEarlier={isLoadingEarlier}
-                onLoadEarlier={onLoadEarlier}
-                infiniteScroll
-            />
-        )
-    }
-
-    const Drawer = createDrawerNavigator();
-
     if (loading) {
         return <Loading/>;
     }
@@ -234,24 +208,9 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
 }));
 
 const styles = StyleSheet.create({
-    button: {
-        position: 'absolute',
-        top: 20,
-        padding: 10,
-    },
-    caption: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        alignItems: 'center',
-    },
     container: {
         flex: 1,
         backgroundColor: '#F5FCFF',
-    },
-    instructions: {
-        textAlign: 'center',
-        color: '#333333',
-        marginBottom: 5,
     },
 });
 
