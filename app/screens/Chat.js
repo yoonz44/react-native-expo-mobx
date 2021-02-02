@@ -5,18 +5,21 @@ import {Bubble, GiftedChat} from "react-native-gifted-chat";
 
 import Constants from 'expo-constants';
 import SideMenu from "react-native-side-menu-updated";
-import Toast from 'react-native-simple-toast';
+import Toast from 'react-native-toast-message';
 
 import {database} from '../components/Firebase/firebase';
 import Loading from "../components/Loading";
 import Menu from "../components/Menu";
 
+import { Manager } from 'socket.io-client';
+
 let keyArr = [];
 let chatArr = [];
 let chatListLength = 0;
 let pageSize = 20;
+let socket;
 
-const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
+const Chat = inject("ChatStore")(observer(({navigation, route, ChatStore}) => {
     const {roomId} = route.params;
     const chatList = database.ref(`room/${roomId}`);
 
@@ -25,6 +28,28 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
     const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
     const [loadEarlier, setLoadEarlier] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        const manager = new Manager("ws://192.168.0.6:9502", {
+            reconnectionDelayMax: 10000,
+            transports: ['websocket'],
+        });
+
+        socket = manager.socket("/talkpic_socket");
+
+        if (socket) {
+            socket.emit('joinRoom', roomId);
+            socket.on('pplUp', (data) => {
+                console.log(data);
+                showPPL(data);
+            });
+        }
+
+        return () => {
+            socket.emit('leaveRoom', roomId);
+            socket.disconnect();
+        }
+    }, []);
 
     useEffect(() => {
         setIsMounted(true);
@@ -66,6 +91,20 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
             ChatStore.setSideOpen(false);
         }
     }, []);
+
+    const showPPL = (data) => {
+        console.log(data);
+        Toast.show({
+            text1: data.title,
+            text2: data.description
+        });
+    }
+
+    const linkSide = (uri) => {
+        navigation.navigate('ChatWebView', {
+            uri: uri
+        })
+    }
 
     const onReceive = (snapshot) => {
         if (!snapshot.val()) {
@@ -141,7 +180,6 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
     };
 
     const onSend = (messages) => {
-        Toast.showWithGravity('Hello World', Toast.LONG, Toast.TOP);
         const today = new Date();
         const timestamp = today.toISOString();
 
@@ -183,7 +221,7 @@ const Chat = inject("ChatStore")(observer(({route, ChatStore}) => {
 
     return (
         <SideMenu
-            menu={<Menu flag={ChatStore.isSideOpen}/>}
+            menu={<Menu flag={ChatStore.isSideOpen} linkSide={linkSide}/>}
             menuPosition="right"
             isOpen={ChatStore.isSideOpen}
             onChange={isOpen => ChatStore.setSideOpen(isOpen)}

@@ -1,4 +1,4 @@
-import {Chat, ChatList} from "../screens";
+import {Chat, ChatList, ChatWebView} from "../screens";
 import NotFoundScreen from "../screens/NotFoundScreen";
 import * as React from "react";
 import {createStackNavigator} from "@react-navigation/stack";
@@ -9,14 +9,22 @@ const Stack = createStackNavigator();
 
 const RootNavigator = inject("ChatStore")(observer(({ChatStore}) => {
     return (
-        <Stack.Navigator initialRouteName='ChatList' screenOptions={{headerShown: true}}>
+        <Stack.Navigator
+            initialRouteName='ChatList'
+            screenOptions={
+                {
+                    headerShown: true,
+                }
+            }
+        >
             <Stack.Screen
                 name='Chat'
                 component={Chat}
                 options={{
                     headerRight: () => (
                         <Hamburger toggle={() => ChatStore.setSideOpen(!ChatStore.isSideOpen)}/>
-                    )
+                    ),
+                    title: '채팅룸'
                 }}
             />
             <Stack.Screen
@@ -24,6 +32,13 @@ const RootNavigator = inject("ChatStore")(observer(({ChatStore}) => {
                 component={ChatList}
                 options={{
                     headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name='ChatWebView'
+                component={ChatWebView}
+                options={{
+                    title: 'PPL'
                 }}
             />
             <Stack.Screen name="NotFound" component={NotFoundScreen} options={{title: 'Oops!'}}/>

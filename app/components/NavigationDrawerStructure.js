@@ -15,13 +15,6 @@ const NavigationDrawerStructure = (props) => {
                     size={24}
                     color="black"
                 />
-                {/*<Image*/}
-                {/*    source={{*/}
-                {/*        uri:*/}
-                {/*            'https://raw.githubusercontent.com/AboutReact/sampleresource/master/drawerWhite.png',*/}
-                {/*    }}*/}
-                {/*    style={{ width: 25, height: 25, marginLeft: 5 }}*/}
-                {/*/>*/}
             </TouchableOpacity>
         </View>
     );

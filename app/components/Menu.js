@@ -6,6 +6,7 @@ import {
     View,
     Image,
     Text,
+    TouchableHighlight
 } from 'react-native';
 
 const window = Dimensions.get('window');
@@ -16,7 +17,7 @@ const styles = StyleSheet.create({
         flex: 1,
         width: window.width,
         height: window.height,
-        backgroundColor: 'gray',
+        // backgroundColor: 'gray',
         padding: 20,
     },
     avatarContainer: {
@@ -62,11 +63,15 @@ export default function Menu(props) {
                 )
             }
 
-            <Text
-                style={styles.item}
+            <TouchableHighlight
+                onPress={() => props.linkSide('https://www.naver.com')}
             >
-                Contacts
-            </Text>
+                <Text
+                    style={styles.item}
+                >
+                    Contacts
+                </Text>
+            </TouchableHighlight>
         </ScrollView>
     );
 }
